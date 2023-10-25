@@ -1,5 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
+import bcrypt from "bcrypt-nodejs";
 
 const app = express();
 app.use(bodyParser.json());
@@ -33,7 +34,7 @@ const database = {
 };
 
 app.get("/", (req, res) => {
-    res.send("Homepage");
+    res.send(database.users);
 });
 
 app.post("/signin", (req, res) => {
@@ -45,8 +46,50 @@ app.post("/signin", (req, res) => {
     }
 });
 
-app.post("signup", (req, res) => {});
+app.post("signup", (req, res) => {
+    const { name, email, password } = req.body;
+    database.users.push({
+        id: "125",
+        name: name,
+        email: email,
+        password: password,
+        entries: 0,
+        joined: new Date()
+    });
+    res.json(database.users[database.users.length - 1]);
+});
 
-app.listen(3000, () => {
+app.get("/profile/:id", (req, res) => {
+    const { id } = req.params;
+    const found = false;
+    database.users.forEach(user => {
+        if(user.id === id) {
+            found = !found;
+            return res.json(user);
+        }
+    });
+
+    if(!found) {
+        res.status(404).json("User not found");
+    }
+});
+
+app.put("/image" , (req, res) => {
+    const { id } = req.body;
+    const found = false;
+    database.users.forEach(user => {
+        if(user.id === id) {
+            found = !found;
+            user.entries++;
+            return res.json(user.entries);
+        }
+    });
+
+    if(!found) {
+        res.status(404).json("User not found");
+    }
+});
+
+app.listen(3030, () => {
     console.log("App running on port 3000");
 });
