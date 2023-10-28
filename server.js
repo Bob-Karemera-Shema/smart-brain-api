@@ -82,7 +82,8 @@ app.put("/image" , (req, res) => {
     database.users.forEach(user => {
         if(user.id === id) {
             found = !found;
-            user.entries++;
+            user.entries += 1;
+            console.log(user.entries);
             return res.json(user.entries);
         }
     });
