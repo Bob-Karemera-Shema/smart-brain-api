@@ -29,27 +29,55 @@ app.get("/", (req, res) => {
 });
 
 app.post("/signin", (req, res) => {
-    if (req.body.email === database.users[0].email &&
-        req.body.password === database.users[0].password) {
-        res.json(database.users[0]);
-    } else {
-        res.status(400).json("error signing in");
-    }
+    database.select('email', 'hash')
+        .from('login')
+        .where('email', '=', req.body.email)
+        .then(data => {
+            const isAuth = bcrypt.compareSync(req.body.password, data[0].hash);
+            if (isAuth) {
+                database.select('*')
+                    .from('users')
+                    .where('email', '=', req.body.email)
+                    .then(user => {
+                        res.json(user[0])
+                    })
+                    .catch(err => res.status(400).json('unable to get user'));
+            } else {
+                res.status(400).json('wrong credentials');
+            }
+        })
+        .catch(err => res.status(400).json('wrong credentials'));
 });
 
 app.post("/signup", (req, res) => {
     const { name, email, password } = req.body;
-    database('users')
-        .returning('*')
-        .insert({
+    const hash = bcrypt.hashSync(password);
+
+    database.transaction(trx => {
+        trx.insert({
             email: email,
-            name: name,
-            joined: new Date()
+            hash: hash
         })
-        .then(user => {
-            res.json(user[0]);
-        })
+            .into('login')
+            .returning('email')
+            .then(loginEmail => {
+                return trx('users')
+                    .returning('*')
+                    .insert({
+                        email: loginEmail[0].email,
+                        name: name,
+                        joined: new Date()
+                    })
+                    .then(user => {
+                        res.json(user[0]);
+                    });
+            })
+            .then(trx.commit)
+            .catch(trx.rollback)
+    })
         .catch(err => res.status(400).json('Unable to sign up'));
+
+
 });
 
 app.get("/profile/:id", (req, res) => {
@@ -61,7 +89,7 @@ app.get("/profile/:id", (req, res) => {
             id: id
         })
         .then(user => {
-            if(user.length){
+            if (user.length) {
                 res.json(user[0]);
             } else {
                 res.status(400).json('User Not Found');
@@ -72,19 +100,14 @@ app.get("/profile/:id", (req, res) => {
 
 app.put("/image", (req, res) => {
     const { id } = req.body;
-    const found = false;
-    database.users.forEach(user => {
-        if (user.id === id) {
-            found = !found;
-            user.entries += 1;
-            console.log(user.entries);
-            return res.json(user.entries);
-        }
-    });
-
-    if (!found) {
-        res.status(404).json("User not found");
-    }
+    database('users')
+        .where('id', '=', id)
+        .increment('entries', 1)
+        .returning('entries')
+        .then(entries => {
+            res.json(entries[0].entries);
+        })
+        .catch(err => res.status(400).json('unable to get entries'));
 });
 
 app.listen(3030, () => {
