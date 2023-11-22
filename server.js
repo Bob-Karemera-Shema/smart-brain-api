@@ -25,7 +25,7 @@ database.select()
     });
 
 app.get("/", (req, res) => {
-    res.send(database.users);
+    res.status(200).json('success');
 });
 
 app.post("/signin", (req, res) => {
