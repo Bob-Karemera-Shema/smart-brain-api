@@ -6,7 +6,7 @@ import knex from "knex";
 import signin from "./controllers/signin.js";
 import signup from "./controllers/signup.js";
 import profile from "./controllers/profile.js";
-import image from "./controllers/image.js";
+import {image, handleAPICall} from "./controllers/image.js";
 
 const app = express();
 app.use(bodyParser.json());
@@ -22,12 +22,6 @@ const database = knex({
     }
 });
 
-database.select()
-    .from('users')
-    .then(data => {
-        console.log(data);
-    });
-
 app.get("/", (req, res) => {
     res.status(200).json('success');
 });
@@ -39,6 +33,8 @@ app.post("/signup", (req, res) => signup(req, res, database, bcrypt));
 app.get("/profile/:id", (req, res) => profile(req, res, database));
 
 app.put("/image", (req, res) => image(req, res, database));
+
+app.post("/imageurl", (req, res) => handleAPICall(req, res));
 
 app.listen(3030, () => {
     console.log("App running on port 3030");
