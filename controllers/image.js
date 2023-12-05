@@ -1,46 +1,36 @@
-import Clarifai from 'clarifai';
+import { ClarifaiStub, grpc } from "clarifai-nodejs-grpc";
 
-const clarifaiRequest = (imageURL) => {
-    const PAT = '98e42e8a626b46ffa9ededb80f51c34c';
-    const USER_ID = 'b9f8884cvz0m';
-    const APP_ID = 'smart-brain';
-    const IMAGE_URL = imageURL;
+const stub = ClarifaiStub.grpc();
 
-    const raw = JSON.stringify({
-        "user_app_id": {
-            "user_id": USER_ID,
-            "app_id": APP_ID
-        },
-        "inputs": [
-            {
-                "data": {
-                    "image": {
-                        "url": IMAGE_URL
-                    }
-                }
-            }
-        ]
-    });
-
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Authorization': 'Key ' + PAT
-        },
-        body: raw
-    };
-
-    return requestOptions;
-};
+const metadata = new grpc.Metadata();
+metadata.set("authorization", "Key 98e42e8a626b46ffa9ededb80f51c34c");
 
 export const handleAPICall = (req, res) => {
-    fetch("https://api.clarifai.com/v2/models/face-detection/outputs", clarifaiRequest(req.body.input))
-        .then(response => response.json())
-        .then(data => {
-            res.json(data);
-        })
-        .catch(err => res.status(400).json('unable to connect to API'));
+    stub.PostModelOutputs(
+        {
+            user_app_id: {
+                "user_id": "b9f8884cvz0m",
+                "app_id": "smart-brain"
+            },
+            model_id: "a403429f2ddf4b49b307e318f00e528b",
+            version_id: "34ce21a40cc24b6b96ffee54aabff139",
+            inputs: [{data: {image: {url: req.body.input}}}]
+        },
+        metadata,
+        (err, response) => {
+            if (err) {
+                console.log("Error: " + err);
+                return;
+            }
+    
+            if (response.status.code !== 10000) {
+                console.log("Received failed status: " + response.status.description + "\n" + response.status.details);
+                return;
+            }
+            
+            res.json(response);
+        }
+    );
 };
 
 export const image = (req, res, database) => {
