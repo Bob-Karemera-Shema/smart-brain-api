@@ -4,7 +4,7 @@
   "description": "Smart Brain Web App API server source code",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "node server.js"
   },
   "author": "Bob Karemera Shema",
   "license": "ISC",
