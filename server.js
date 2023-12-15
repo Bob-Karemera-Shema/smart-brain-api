@@ -14,16 +14,18 @@ app.use(cors());
 const database = knex({
     client: 'pg',
     connection: {
-        host: '127.0.0.1',
+        connectString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false},
+        host: process.env.DATABASE_HOST,
         port: 5432,
-        user: 'postgres',
-        password: 'test',
-        database: 'smart-brain'
+        user: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PW,
+        database: process.env.DATABASE_DB
     }
 });
 
 app.get("/", (req, res) => {
-    res.status(200).json('success');
+    res.status(200).json('successfully connected to server');
 });
 
 app.post("/signin", (req, res) => signin(req, res, database, bcrypt));
@@ -36,6 +38,6 @@ app.put("/image", (req, res) => image(req, res, database));
 
 app.post("/imageurl", (req, res) => handleAPICall(req, res));
 
-app.listen(3030, () => {
-    console.log("App running on port 3030");
+app.listen(process.env.PORT || 3030, () => {
+    console.log(`App running on port ${process.env.PORT}`);
 });

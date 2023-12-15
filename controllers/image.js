@@ -3,13 +3,13 @@ import { ClarifaiStub, grpc } from "clarifai-nodejs-grpc";
 const stub = ClarifaiStub.grpc();
 
 const metadata = new grpc.Metadata();
-metadata.set("authorization", "Key 98e42e8a626b46ffa9ededb80f51c34c");
+metadata.set("authorization", `Key ${process.env.CLARIFAI_PAT}`);
 
 export const handleAPICall = (req, res) => {
     stub.PostModelOutputs(
         {
             user_app_id: {
-                "user_id": "b9f8884cvz0m",
+                "user_id": process.env.CLARIFAI_USER_ID,
                 "app_id": "smart-brain"
             },
             model_id: "a403429f2ddf4b49b307e318f00e528b",
